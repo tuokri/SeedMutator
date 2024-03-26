@@ -64,12 +64,18 @@ function PreBeginPlay()
         Config.SaveConfig();
     }
 
-    SetTimer(1.0, True, NameOf(CheckStatus));
+    // Enable checks after a delay. TODO: adjust this delay?
+    SetTimer(5.0, False, NameOf(EnableCheckStatusTimer));
 
     `smlog("mutator initialized,"
         @ "BotLimit=" $ Config.BotLimit
         @ "DynamicBotAddThreshold=" $ Config.DynamicBotAddThreshold
     );
+}
+
+function EnableCheckStatusTimer()
+{
+    SetTimer(1.0, True, NameOf(CheckStatus));
 }
 
 function ROMutate(string MutateString, PlayerController Sender, out string ResultMsg)
@@ -300,8 +306,38 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
         --Num;
         `smlog("added bot" @ ROBot @ ROBot.PlayerReplicationInfo.PlayerName);
 
-        ROGI.UpdateGameSettingsCounts();
+        // ROGI.UpdateGameSettingsCounts();
+        // Custom handler for this in mutator to also se NumBots.
+        UpdateGameSettingsCounts(ROGI);
     }
+}
+
+function UpdateGameSettingsCounts(ROGameInfo ROGI)
+{
+	local OnlineGameSettings GameSettings;
+
+	if (ROGI.GameInterface != None)
+	{
+		GameSettings = ROGI.GameInterface.GetGameSettings(
+            ROGI.PlayerReplicationInfoClass.default.SessionName);
+
+		if (GameSettings != None)
+		{
+			// Make sure that we don't exceed our max allowing player counts for this game type!
+			GameSettings.NumPublicConnections = Clamp(ROGI.MaxPlayers, 0, ROGI.MaxPlayersAllowed);
+			GameSettings.NumPrivateConnections = Clamp(
+                GameSettings.NumPrivateConnections, 0, ROGI.MaxPlayers - GameSettings.NumPublicConnections);
+
+			// Update the number of open slots available.
+			GameSettings.NumOpenPublicConnections = Clamp(
+                GameSettings.NumPublicConnections - ROGI.GetNumPlayers(), 0, GameSettings.NumPublicConnections);
+
+            GameSettings.NumBots = ROGI.NumBots;
+
+			ROGI.OnlineSub.GameInterface.UpdateOnlineGame(
+                ROGI.PlayerReplicationInfoClass.default.SessionName, GameSettings);
+		}
+	}
 }
 
 DefaultProperties
