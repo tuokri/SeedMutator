@@ -38,6 +38,10 @@ function PreBeginPlay()
     super.PreBeginPlay();
 
     Config = new (self) class'SeedMutatorConfig';
+    if (Config == None)
+    {
+        `smlog("FATAL ERROR! FAILED TO INITIALIZE CONFIGURATION!");
+    }
 
     if (Config.ConfigVersion != SEEDMUTATOR_CONFIG_VERSION)
     {
