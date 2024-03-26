@@ -80,7 +80,7 @@ function EnableCheckStatusTimer()
 
 function ModifyPreLogin(string Options, string Address, out string ErrorMessage)
 {
-    // If we're nearing MaxPlayers, kick out a bot here.
+    // If we're nearing MaxPlayers, kick out a bot here?
 
     super.ModifyPreLogin(Options, Address, ErrorMessage);
 }
@@ -107,7 +107,7 @@ function ROMutate(string MutateString, PlayerController Sender, out string Resul
         return;
     }
 
-    Args = SplitString(MutateString);
+    Args = SplitString(MutateString, " ", True);
     Command = Locs(Args[0]);
 
     switch (Command)
@@ -182,6 +182,12 @@ function CheckStatus()
     BotDiff = Config.BotLimit - WorldInfo.Game.NumBots;
     PlayerRatio = WorldInfo.Game.GetNumPlayers() / WorldInfo.Game.MaxPlayers;
 
+    // `log("DesiredPlayerCount :" @ ROGameInfo(WorldInfo.Game).DesiredPlayerCount);
+    // `log("NumBots            :" @ WorldInfo.Game.NumBots);
+    // `log("NumPlayers         :" @ WorldInfo.Game.GetNumPlayers());
+    // `log("PlayerRatio        :" @ PlayerRatio);
+    // `log("BotDiff            :" @ BotDiff);
+
     if (Config.BotLimit > 0 && Config.DynamicBotAddThreshold > 0.0)
     {
         if (PlayerRatio <= Config.DynamicBotAddThreshold && BotDiff > 0)
@@ -214,12 +220,12 @@ function CheckStatus()
             Bot.Destroy();
 
             --ROGI.DesiredPlayerCount;
-            --ROGI.NumBots;
+            // --ROGI.NumBots;
         }
     }
 }
 
-function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
+function AddBots(int Num, optional int NewTeam = -1)
 {
     local ROAIController ROBot;
     local byte ChosenTeam;
@@ -233,6 +239,8 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
     }
 
     ROGI = ROGameInfo(WorldInfo.Game);
+
+    `smlog("attempting to add" @ Num @ "bots...");
 
     while (Num > 0 && ROGI.NumBots + ROGI.NumPlayers < ROGI.MaxPlayers)
     {
@@ -308,12 +316,7 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
             ROBot.AISuspended();
         }
 
-        // Note that we've added another Bot.
-        if (!bNoForceAdd)
-        {
-            ++ROGI.DesiredPlayerCount;
-        }
-
+        ++ROGI.DesiredPlayerCount;
         ++ROGI.NumBots;
         --Num;
         `smlog("added bot" @ ROBot @ ROBot.PlayerReplicationInfo.PlayerName);
