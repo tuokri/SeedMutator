@@ -3,7 +3,7 @@
     `cond, \
     `if(`tag) name("SeedMutator-" $ string(`tag)) `else 'SeedMutator' `endif)
 
-`define smlog(msg, cond, tag) \
+`define smslog(msg, cond, tag) \
     `log(default.class.name $ "::" $ GetFuncName() $ "(): " $ `msg, \
     `cond, \
     `if(`tag) name("SeedMutator-" $ string(`tag)) `else 'SeedMutator' `endif)
