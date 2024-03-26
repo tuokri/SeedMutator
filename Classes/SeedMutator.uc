@@ -161,6 +161,7 @@ function bool HandleSetDynamicBotAddThreshold(const out array<string> Args)
 function CheckStatus()
 {
     local float PlayerRatio;
+    local AIController Bot;
 
     if (Config.BotLimit > 0 && Config.DynamicBotAddThreshold > 0.0)
     {
@@ -169,6 +170,16 @@ function CheckStatus()
         if (PlayerRatio <= Config.DynamicBotAddThreshold)
         {
             // Add bots to the game.
+        }
+    }
+    else if (Config.BotLimit == 0 && WorldInfo.Game.NumBots > 0)
+    {
+        `smlog("BotLimit set to 0, kicking all bots...");
+
+        ForEach WorldInfo.AllControllers(class'AIController', Bot)
+        {
+            `smlog("kicking" @ Bot @ Bot.PlayerReplicationInfo.PlayerName);
+            Bot.Destroy();
         }
     }
 }
