@@ -24,25 +24,131 @@
 class SeedMutator extends ROMutator
     config(Mutator_Seed);
 
+const SEEDMUTATOR_CONFIG_VERSION = 1;
+const SEEDMUTATOR_DEFAULT_BOT_LIMIT = 32;
+const SEEDMUTATOR_DEFAULT_BOT_ADD_THRESH = 0.5;
+
+// Maximum number of bots to add to the game.
+var(SeedMutator) config int BotLimit;
+// Threshold to dynamically start adding bots.
+// Number of players as percentage of maximum players.
+var(SeedMutator) config float DynamicBotAddThreshold;
+// Config version. Updated in case of backwards-incompatible
+// changes in mutator code.
+var(SeedMutator) config int ConfigVersion;
+
 function PreBeginPlay()
 {
     super.PreBeginPlay();
 
-    `smlog("mutator initialized");
+    if (ConfigVersion != SEEDMUTATOR_CONFIG_VERSION)
+    {
+        `smlog("current ConfigVersion is not up to date"
+            @ "(" $ SEEDMUTATOR_CONFIG_VERSION $ ")"
+            @ "performing first time initialization"
+        );
+
+        if (BotLimit <= 0 || BotLimit > 64)
+        {
+            BotLimit = SEEDMUTATOR_DEFAULT_BOT_LIMIT;
+        }
+        if (DynamicBotAddThreshold <= 0.0 || DynamicBotAddThreshold > 1.0)
+        {
+            DynamicBotAddThreshold = SEEDMUTATOR_DEFAULT_BOT_ADD_THRESH;
+        }
+
+        SaveConfig();
+    }
+
+    `smlog("mutator initialized,"
+        @ "BotLimit=" $ BotLimit
+        @ "DynamicBotAddThreshold=" $ DynamicBotAddThreshold
+    );
 }
 
 function ROMutate(string MutateString, PlayerController Sender, out string ResultMsg)
 {
     local array<string> Args;
+    local string Command;
+    local bool bSuccess;
 
-    Args = SplitString(MutateString);
-
-    if (Locs(Args[0]) == "endmatch")
+    if (!WorldInfo.Game.AccessControl.IsAdmin(Sender))
     {
-        ROGameInfo(WorldInfo.Game).MatchWon(0, ROWC_MatchEndTime, 0, 0, 0);
+        `smlog("Warning!"
+            @ Sender
+            @ Sender.PlayerReplicationInfo.PlayerName
+            @ ROPlayerReplicationInfo(Sender.PlayerReplicationInfo).SteamId64
+            @ Sender.GetPlayerNetworkAddress()
+            @ "attempted to execute command"
+            @ "'" $ MutateString $ "'"
+            @ "but is not an admin, request denied."
+        );
+
+        ResultMsg = "invalid";
+        return;
     }
 
+    Args = SplitString(MutateString);
+    Command = Locs(Args[0]);
+
+    switch (Command)
+    {
+        case "sm_help":
+            // TODO: print/log help.
+            break;
+        case "sm_setbotlimit":
+            bSuccess = HandleSetBotLimit(Args);
+            break;
+        case "sm_setdynamicbotaddthreshold":
+            bSuccess = HandleSetDynamicBotAddThreshold(Args);
+            break;
+        default:
+            `smlog("command '" $ Command $ "' not recognized by SeedMutator");
+            bSuccess = False;
+            break;
+    }
+
+    `smlog(Sender
+        @ Sender.PlayerReplicationInfo.PlayerName
+        @ ROPlayerReplicationInfo(Sender.PlayerReplicationInfo).SteamId64
+        @ Sender.GetPlayerNetworkAddress()
+        @ "executed command '" $ MutateString $ "'"
+        @ "bSuccess=" $ bSuccess
+    );
+
     super.ROMutate(MutateString, Sender, ResultMsg);
+}
+
+function bool HandleSetBotLimit(const out array<string> Args)
+{
+    local int NewBotLimit;
+
+    NewBotLimit = int(Args[1]);
+    if (NewBotLimit >= 0 && NewBotLimit <= 64)
+    {
+        BotLimit = NewBotLimit;
+        SaveConfig();
+        `smlog("updated BotLimit to" @ BotLimit);
+        return True;
+    }
+
+    return False;
+}
+
+function bool HandleSetDynamicBotAddThreshold(const out array<string> Args)
+{
+    local float NewDynThresh;
+
+    NewDynThresh = float(Args[1]);
+    if (NewDynThresh >= 0.0 && NewDynThresh <= 1.0)
+    {
+        DynamicBotAddThreshold = NewDynThresh;
+        SaveConfig();
+        `smlog("updated DynamicBotAddThreshold to" @ DynamicBotAddThreshold);
+        return True;
+    }
+
+    return False;
 }
 
 DefaultProperties
