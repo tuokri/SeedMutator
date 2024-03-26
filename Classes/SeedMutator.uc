@@ -157,41 +157,57 @@ function bool HandleSetDynamicBotAddThreshold(const out array<string> Args)
     return False;
 }
 
+// TODO: is this stupid? Just use the built-in DesiredPlayers functionality.
 // TODO: refactor into more functions?
 function CheckStatus()
 {
     local float PlayerRatio;
     local AIController Bot;
+    local int BotDiff;
+    local ROGameInfo ROGI;
+
+    BotDiff = Config.BotLimit - WorldInfo.Game.NumBots;
+    PlayerRatio = WorldInfo.Game.GetNumPlayers() / WorldInfo.Game.MaxPlayers;
 
     if (Config.BotLimit > 0 && Config.DynamicBotAddThreshold > 0.0)
     {
-        PlayerRatio = WorldInfo.Game.GetNumPlayers() / WorldInfo.Game.MaxPlayers;
-
-        if (PlayerRatio <= Config.DynamicBotAddThreshold)
+        if (PlayerRatio <= Config.DynamicBotAddThreshold && BotDiff > 0)
         {
-            // Add bots to the game.
+            AddBots(BotDiff);
         }
     }
     else if (Config.BotLimit == 0 && WorldInfo.Game.NumBots > 0)
     {
-        `smlog("BotLimit set to 0, kicking all bots...");
+        // TODO: check ROGameInfo::KillBots.
+
+        `smlog("BotLimit set to 0, force kicking all bots...");
+
+        ROGI = ROGameInfo(WorldInfo.Game);
 
         ForEach WorldInfo.AllControllers(class'AIController', Bot)
         {
             `smlog("kicking" @ Bot @ Bot.PlayerReplicationInfo.PlayerName);
+
+            if (Bot.Pawn != None)
+            {
+                Bot.Pawn.KilledBy(Bot.Pawn);
+            }
+
             Bot.Destroy();
+
+            --ROGI.DesiredPlayerCount;
+            --ROGI.NumBots;
         }
     }
 }
 
-// TODO: yadda yadda.
 function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
 {
     local ROAIController ROBot;
     local byte ChosenTeam;
     local byte SuggestedTeam;
-    local ROPlayerReplicationInfo ROPRI;
     local ROGameInfo ROGI;
+    local string BotName;
 
     if (WorldInfo.Game.bLevelChange)
     {
@@ -240,8 +256,14 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
         // Put the new Bot on the Team that needs it.
         ChosenTeam = ROGI.PickTeam(SuggestedTeam, ROBot);
         // Set the bot name based on team.
-        ROGI.ChangeName(ROBot, ROGI.GetDefaultBotName(
-            ROBot, ChosenTeam, ROTeamInfo(ROGI.GameReplicationInfo.Teams[ChosenTeam]).NumBots + 1), false);
+        BotName = ROGI.GetDefaultBotName(ROBot,
+            ChosenTeam, ROTeamInfo(ROGI.GameReplicationInfo.Teams[ChosenTeam]).NumBots + 1);
+        // Make sure bot names start with "BOT " prefix.
+        if (!(InStr(BotName, "BOT", False, True) == 0))
+        {
+            BotName = "BOT" @ BotName;
+        }
+        ROGI.ChangeName(ROBot, BotName, false);
 
         ROGI.JoinTeam(ROBot, ChosenTeam);
 
@@ -255,15 +277,6 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
         }
 
         ROBot.ChooseSquad();
-
-        // GRIP  BEGIN
-        // Remove. Debugging purpose only.
-        ROPRI = ROPlayerReplicationInfo(ROBot.PlayerReplicationInfo);
-        if (ROPRI.RoleInfo.bIsTankCommander)
-        {
-            ROGI.ChangeName(ROBot, ROPRI.GetHumanReadableName() $" (TankAI)", false);
-        }
-        // GRIP END
 
         if (ROTeamInfo(ROBot.PlayerReplicationInfo.Team) != none
             && ROTeamInfo(ROBot.PlayerReplicationInfo.Team).ReinforcementsRemaining > 0)
@@ -280,10 +293,13 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
         // Note that we've added another Bot.
         if (!bNoForceAdd)
         {
-            ROGI.DesiredPlayerCount++;
+            ++ROGI.DesiredPlayerCount;
         }
+
         ++ROGI.NumBots;
         --Num;
+        `smlog("added bot" @ ROBot @ ROBot.PlayerReplicationInfo.PlayerName);
+
         ROGI.UpdateGameSettingsCounts();
     }
 }
