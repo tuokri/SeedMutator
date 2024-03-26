@@ -326,30 +326,30 @@ function AddBots(int Num, optional int NewTeam = -1, optional bool bNoForceAdd)
 
 function UpdateGameSettingsCounts(ROGameInfo ROGI)
 {
-	local OnlineGameSettings GameSettings;
+    local OnlineGameSettings GameSettings;
 
-	if (ROGI.GameInterface != None)
-	{
-		GameSettings = ROGI.GameInterface.GetGameSettings(
+    if (ROGI.GameInterface != None)
+    {
+        GameSettings = ROGI.GameInterface.GetGameSettings(
             ROGI.PlayerReplicationInfoClass.default.SessionName);
 
-		if (GameSettings != None)
-		{
-			// Make sure that we don't exceed our max allowing player counts for this game type!
-			GameSettings.NumPublicConnections = Clamp(ROGI.MaxPlayers, 0, ROGI.MaxPlayersAllowed);
-			GameSettings.NumPrivateConnections = Clamp(
+        if (GameSettings != None)
+        {
+            // Make sure that we don't exceed our max allowing player counts for this game type!
+            GameSettings.NumPublicConnections = Clamp(ROGI.MaxPlayers, 0, ROGI.MaxPlayersAllowed);
+            GameSettings.NumPrivateConnections = Clamp(
                 GameSettings.NumPrivateConnections, 0, ROGI.MaxPlayers - GameSettings.NumPublicConnections);
 
-			// Update the number of open slots available.
-			GameSettings.NumOpenPublicConnections = Clamp(
+            // Update the number of open slots available.
+            GameSettings.NumOpenPublicConnections = Clamp(
                 GameSettings.NumPublicConnections - ROGI.GetNumPlayers(), 0, GameSettings.NumPublicConnections);
 
             GameSettings.NumBots = ROGI.NumBots;
 
-			ROGI.OnlineSub.GameInterface.UpdateOnlineGame(
+            ROGI.OnlineSub.GameInterface.UpdateOnlineGame(
                 ROGI.PlayerReplicationInfoClass.default.SessionName, GameSettings);
-		}
-	}
+        }
+    }
 }
 
 DefaultProperties
