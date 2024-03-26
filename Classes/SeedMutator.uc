@@ -78,6 +78,13 @@ function EnableCheckStatusTimer()
     SetTimer(1.0, True, NameOf(CheckStatus));
 }
 
+function ModifyPreLogin(string Options, string Address, out string ErrorMessage)
+{
+    // If we're nearing MaxPlayers, kick out a bot here.
+
+    super.ModifyPreLogin(Options, Address, ErrorMessage);
+}
+
 function ROMutate(string MutateString, PlayerController Sender, out string ResultMsg)
 {
     local array<string> Args;
@@ -182,6 +189,11 @@ function CheckStatus()
             AddBots(BotDiff);
         }
     }
+//     TODO: if we're above thresh, start kicking bots here?
+//     else if ()
+//     {
+//
+//     }
     else if (Config.BotLimit == 0 && WorldInfo.Game.NumBots > 0)
     {
         // TODO: check ROGameInfo::KillBots.
