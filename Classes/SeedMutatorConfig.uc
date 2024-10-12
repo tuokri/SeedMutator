@@ -27,9 +27,15 @@ class SeedMutatorConfig extends Object
 
 // Maximum number of bots to add to the game.
 var(SeedMutator) config int BotLimit;
+
 // Threshold to dynamically start adding bots.
 // Number of players as percentage of maximum players.
 var(SeedMutator) config float DynamicBotAddThreshold;
+
+// Pick the most suitable human squad member and promote them if
+// a squad has a bot squad leader.
+var(SeedMutator) config bool bDemoteBotSquadLeadersIfHumanInSquad;
+
 // Config version. Updated in case of backwards-incompatible
 // changes in mutator code.
 var(SeedMutator) config int ConfigVersion;

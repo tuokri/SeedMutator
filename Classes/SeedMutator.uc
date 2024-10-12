@@ -24,7 +24,7 @@
 class SeedMutator extends ROMutator
     config(Mutator_Seed);
 
-const SEEDMUTATOR_CONFIG_VERSION = 1;
+const SEEDMUTATOR_CONFIG_VERSION = 2;
 const SEEDMUTATOR_DEFAULT_BOT_LIMIT = 32;
 const SEEDMUTATOR_DEFAULT_BOT_ADD_THRESH = 0.5;
 
@@ -76,9 +76,7 @@ function PreBeginPlay()
     );
 }
 
-// - Demote bots that are taking up squad leader slots in a squad with human players in it.
-// TODO: check if we can do something about https://github.com/tuokri/SeedMutator/issues/1
-function CheckBots()
+function DemoteBotSquadLeaders()
 {
     local AIController AIC;
     local ROPlayerReplicationInfo ROPRI;
@@ -117,6 +115,16 @@ function CheckBots()
                 ROPRI.Squad.AlertSpawnChange(True);
             }
         }
+    }
+}
+
+// - Demote bots that are taking up squad leader slots in a squad with human players in it.
+// TODO: check if we can do something about https://github.com/tuokri/SeedMutator/issues/1
+function CheckBots()
+{
+    if (Config.bDemoteBotSquadLeadersIfHumanInSquad)
+    {
+        DemoteBotSquadLeaders();
     }
 }
 
