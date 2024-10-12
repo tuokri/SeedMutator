@@ -1,6 +1,13 @@
 # Seed Mutator
 
 Seeding utilities for Rising Storm 2: Vietnam dedicated server operators.
+This mutator is fully server sided, meaning clients joining the server will
+not be required to download it.
+
+## Steam Workshop
+
+Install on your server from
+[Seed Mutator Steam Workshop Page](https://steamcommunity.com/sharedfiles/filedetails/?id=3201655018).
 
 ## Config Options
 
