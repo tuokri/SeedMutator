@@ -176,6 +176,9 @@ function ROMutate(string MutateString, PlayerController Sender, out string Resul
         case "sm_setdynamicbotaddthreshold":
             bSuccess = HandleSetDynamicBotAddThreshold(Args);
             break;
+        case "sm_setdemotebotsl":
+            bSuccess = HandleSetDemoteBotSquadLeaders(Args);
+            break;
         default:
             `smlog("command '" $ Command $ "' not recognized by SeedMutator");
             bSuccess = False;
@@ -197,6 +200,11 @@ function bool HandleSetBotLimit(const out array<string> Args)
 {
     local int NewBotLimit;
 
+    if (Args.Length < 1)
+    {
+        return False;
+    }
+
     NewBotLimit = int(Args[1]);
     if (NewBotLimit >= 0 && NewBotLimit <= 64)
     {
@@ -213,6 +221,11 @@ function bool HandleSetDynamicBotAddThreshold(const out array<string> Args)
 {
     local float NewDynThresh;
 
+    if (Args.Length < 1)
+    {
+        return False;
+    }
+
     NewDynThresh = float(Args[1]);
     if (NewDynThresh >= 0.0 && NewDynThresh <= 1.0)
     {
@@ -223,6 +236,27 @@ function bool HandleSetDynamicBotAddThreshold(const out array<string> Args)
     }
 
     return False;
+}
+
+function bool HandleSetDemoteBotSquadLeaders(const out array<string> Args)
+{
+    local bool bShouldDemoteBotSLs;
+    local string BoolArg;
+
+    if (Args.Length < 1)
+    {
+        return False;
+    }
+
+    BoolArg = Locs(Args[1]);
+    if (BoolArg == "false" || BoolArg == "true" || BoolArg == "0" || BoolArg == "1")
+    {
+        bShouldDemoteBotSLs = bool(BoolArg);
+        Config.bDemoteBotSquadLeadersIfHumanInSquad = bShouldDemoteBotSLs;
+        `smlog("updated bDemoteBotSquadLeadersIfHumanInSquad to" @ Config.bDemoteBotSquadLeadersIfHumanInSquad);
+    }
+
+    return True;
 }
 
 // TODO: is this stupid? Just use the built-in DesiredPlayers functionality.
