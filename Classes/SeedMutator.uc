@@ -254,9 +254,10 @@ function bool HandleSetDemoteBotSquadLeaders(const out array<string> Args)
         bShouldDemoteBotSLs = bool(BoolArg);
         Config.bDemoteBotSquadLeadersIfHumanInSquad = bShouldDemoteBotSLs;
         `smlog("updated bDemoteBotSquadLeadersIfHumanInSquad to" @ Config.bDemoteBotSquadLeadersIfHumanInSquad);
+        return True;
     }
 
-    return True;
+    return False;
 }
 
 // TODO: is this stupid? Just use the built-in DesiredPlayers functionality.
