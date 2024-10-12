@@ -267,6 +267,7 @@ function CheckStatus()
     local AIController Bot;
     local int BotDiff;
     local ROGameInfo ROGI;
+    local bool bServerIsFull;
 
     BotDiff = Config.BotLimit - WorldInfo.Game.NumBots;
     PlayerRatio = WorldInfo.Game.GetNumPlayers() / WorldInfo.Game.MaxPlayers;
@@ -279,7 +280,8 @@ function CheckStatus()
 
     if (Config.BotLimit > 0 && Config.DynamicBotAddThreshold > 0.0)
     {
-        if (PlayerRatio <= Config.DynamicBotAddThreshold && BotDiff > 0)
+        bServerIsFull = WorldInfo.Game.GetNumPlayers() >= WorldInfo.Game.MaxPlayers;
+        if (!bServerIsFull && (PlayerRatio <= Config.DynamicBotAddThreshold && BotDiff > 0))
         {
             AddBots(BotDiff);
         }
