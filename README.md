@@ -24,6 +24,10 @@ from WebAdmin management console.
 | `ROMutate SM_SetDynamicBotAddThreshold THRESHOLD` | Set bot dynamic add threshold to THRESHOLD.             | `ROMutate SM_SetDynamicBotAddThreshold 0.5` |
 | `ROMutate SM_SetDemoteBotSL [True/False]`         | Enable/disable demoting bot SLs when human is in squad. | `ROMutate SM_SetDemoteBotSL True`           |
 
+## Usage Tips
+
+- Set bot limit to 0 to kick all bots instantly.
+
 ## Development TODOs
 
 - Document bot configuration and console commands.
