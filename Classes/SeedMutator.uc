@@ -67,10 +67,57 @@ function PreBeginPlay()
     // Enable checks after a delay. TODO: adjust this delay?
     SetTimer(5.0, False, NameOf(EnableCheckStatusTimer));
 
+    // Perform various checks periodically.
+    SetTimer(3.0, True, NameOf(CheckBots));
+
     `smlog("mutator initialized,"
         @ "BotLimit=" $ Config.BotLimit
         @ "DynamicBotAddThreshold=" $ Config.DynamicBotAddThreshold
     );
+}
+
+// - Demote bots that are taking up squad leader slots in a squad with human players in it.
+// TODO: check if we can do something about https://github.com/tuokri/SeedMutator/issues/1
+function CheckBots()
+{
+    local AIController AIC;
+    local ROPlayerReplicationInfo ROPRI;
+    local bool bSquadHasHuman;
+    local byte NewSquadLeaderIndex;
+    local int i;
+
+    ForEach WorldInfo.AllControllers(class'AIController', AIC)
+    {
+        ROPRI = ROPlayerReplicationInfo(AIC.PlayerReplicationInfo);
+        if (ROPRI == None || !ROPRI.bIsSquadLeader)
+        {
+            continue;
+        }
+
+        bSquadHasHuman = False;
+        for (i = 0; i < `MAX_ROLES_PER_SQUAD; ++i)
+        {
+            if (ROPlayerController(ROPRI.Squad.SquadMembers[i].Owner) != None)
+            {
+                bSquadHasHuman = True;
+                `smlog(
+                    "squad" @ ROPRI.Squad @ ", Title=" $ ROPRI.Squad.Title $ ", TeamIndex=" $ ROPRI.Squad.Team.TeamIndex
+                    @ "has a BOT squad leader while the squad has human players");
+                break;
+            }
+        }
+
+        if (bSquadHasHuman)
+        {
+            NewSquadLeaderIndex = ROPRI.Squad.FindNewSquadLeader();
+            if (NewSquadLeaderIndex < `MAX_ROLES_PER_SQUAD)
+            {
+                `smlog("promoting role at index" @ NewSquadLeaderIndex @ "to squad leader");
+                ROPRI.Squad.PromoteToSquadLeader(NewSquadLeaderIndex);
+                ROPRI.Squad.AlertSpawnChange(True);
+            }
+        }
+    }
 }
 
 function EnableCheckStatusTimer()
@@ -223,6 +270,8 @@ function CheckStatus()
             // --ROGI.NumBots;
         }
     }
+
+    UpdateGameSettingsCounts(ROGI, True);
 }
 
 function AddBots(int Num, optional int NewTeam = -1)
@@ -327,7 +376,7 @@ function AddBots(int Num, optional int NewTeam = -1)
     }
 }
 
-function UpdateGameSettingsCounts(ROGameInfo ROGI)
+function UpdateGameSettingsCounts(ROGameInfo ROGI, optional bool bSendToBackend)
 {
     local OnlineGameSettings GameSettings;
 
@@ -350,7 +399,7 @@ function UpdateGameSettingsCounts(ROGameInfo ROGI)
             GameSettings.NumBots = ROGI.NumBots;
 
             ROGI.OnlineSub.GameInterface.UpdateOnlineGame(
-                ROGI.PlayerReplicationInfoClass.default.SessionName, GameSettings);
+                ROGI.PlayerReplicationInfoClass.default.SessionName, GameSettings, bSendToBackend);
         }
     }
 }
