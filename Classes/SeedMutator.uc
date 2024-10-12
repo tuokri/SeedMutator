@@ -280,7 +280,7 @@ function CheckStatus()
 
     if (Config.BotLimit > 0 && Config.DynamicBotAddThreshold > 0.0)
     {
-        bServerIsFull = WorldInfo.Game.GetNumPlayers() >= WorldInfo.Game.MaxPlayers;
+        bServerIsFull = (WorldInfo.Game.GetNumPlayers() + WorldInfo.Game.NumBots) >= WorldInfo.Game.MaxPlayers;
         if (!bServerIsFull && (PlayerRatio <= Config.DynamicBotAddThreshold && BotDiff > 0))
         {
             AddBots(BotDiff);
