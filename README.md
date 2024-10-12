@@ -13,6 +13,17 @@ Seeding utilities for Rising Storm 2: Vietnam dedicated server operators.
 See [ROMutator_Seed_Config.ini](Config/ROMutator_Seed_Config.ini) for
 configuration example.
 
+## Admin Console Commands
+
+These commands are runnable when logged in as the server admin or
+from WebAdmin management console.
+
+| Command                                           | Description                                             | Example                                     |
+| ------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| `ROMutate SM_SetBotLimit BOT_LIMIT`               | Set bot limit to BOT_LIMIT.                             | `ROMutate SM_SetBotLimit 32`                |
+| `ROMutate SM_SetDynamicBotAddThreshold THRESHOLD` | Set bot dynamic add threshold to THRESHOLD.             | `ROMutate SM_SetDynamicBotAddThreshold 0.5` |
+| `ROMutate SM_SetDemoteBotSL [True/False]`         | Enable/disable demoting bot SLs when human is in squad. | `ROMutate SM_SetDemoteBotSL True`           |
+
 ## Development TODOs
 
 - Document bot configuration and console commands.
