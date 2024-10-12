@@ -1,4 +1,4 @@
-# Seed Mutator
+# Seed Mutator :seedling:
 
 Seeding utilities for Rising Storm 2: Vietnam dedicated server operators.
 This mutator is fully server sided, meaning clients joining the server will
