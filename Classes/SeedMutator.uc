@@ -146,6 +146,13 @@ function ROMutate(string MutateString, PlayerController Sender, out string Resul
     local string Command;
     local bool bSuccess;
 
+    if (!(Mid(Locs(MutateString), 0, 3) == "sm_"))
+    {
+        // `smdebug("ignoring command:" @ MutateString);
+        super.ROMutate(MutateString, Sender, ResultMsg);
+        return;
+    }
+
     if (!WorldInfo.Game.AccessControl.IsAdmin(Sender))
     {
         `smlog("Warning!"
