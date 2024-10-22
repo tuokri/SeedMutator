@@ -24,7 +24,7 @@
 class SeedMutator extends ROMutator
     config(Mutator_Seed);
 
-const SEEDMUTATOR_CONFIG_VERSION = 2;
+const SEEDMUTATOR_CONFIG_VERSION = 3;
 const SEEDMUTATOR_DEFAULT_BOT_LIMIT = 32;
 const SEEDMUTATOR_DEFAULT_BOT_ADD_THRESH = 0.5;
 
@@ -61,6 +61,9 @@ function PreBeginPlay()
             Config.DynamicBotAddThreshold = SEEDMUTATOR_DEFAULT_BOT_ADD_THRESH;
         }
 
+        // TODO: force this on for now. Maybe remove this check in some future version?
+        Config.bDemoteBotSquadLeadersIfHumanInSquad = True;
+
         Config.SaveConfig();
     }
 
@@ -73,6 +76,7 @@ function PreBeginPlay()
     `smlog("mutator initialized,"
         @ "BotLimit=" $ Config.BotLimit
         @ "DynamicBotAddThreshold=" $ Config.DynamicBotAddThreshold
+        @ "bDemoteBotSquadLeadersIfHumanInSquad=" $ Config.bDemoteBotSquadLeadersIfHumanInSquad
     );
 }
 
@@ -146,6 +150,7 @@ function ROMutate(string MutateString, PlayerController Sender, out string Resul
     local string Command;
     local bool bSuccess;
 
+    // TODO: just use ~=?
     if (!(Mid(Locs(MutateString), 0, 3) == "sm_"))
     {
         // `smdebug("ignoring command:" @ MutateString);
@@ -260,6 +265,7 @@ function bool HandleSetDemoteBotSquadLeaders(const out array<string> Args)
     {
         bShouldDemoteBotSLs = bool(BoolArg);
         Config.bDemoteBotSquadLeadersIfHumanInSquad = bShouldDemoteBotSLs;
+        Config.SaveConfig();
         `smlog("updated bDemoteBotSquadLeadersIfHumanInSquad to" @ Config.bDemoteBotSquadLeadersIfHumanInSquad);
         return True;
     }
