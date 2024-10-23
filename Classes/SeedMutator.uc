@@ -103,7 +103,7 @@ function DemoteBotSquadLeaders()
             {
                 bSquadHasHuman = True;
                 `smlog(
-                    "squad" @ ROPRI.Squad @ ", Title=" $ ROPRI.Squad.Title $ ", TeamIndex=" $ ROPRI.Squad.Team.TeamIndex
+                    "squad" @ ROPRI.Squad $ ", Title=" $ ROPRI.Squad.Title $ ", TeamIndex=" $ ROPRI.Squad.Team.TeamIndex
                     @ "has a BOT squad leader while the squad has human players");
                 break;
             }
@@ -111,7 +111,13 @@ function DemoteBotSquadLeaders()
 
         if (bSquadHasHuman)
         {
-            NewSquadLeaderIndex = ROPRI.Squad.FindNewSquadLeader();
+            NewSquadLeaderIndex = FindNewSquadLeader(ROPRI.Squad);
+            if (NewSquadLeaderIndex == 255)
+            {
+                // TODO: log error here?
+                continue;
+            }
+
             if (NewSquadLeaderIndex < `MAX_ROLES_PER_SQUAD)
             {
                 `smlog("promoting role at index" @ NewSquadLeaderIndex @ "to squad leader");
@@ -120,6 +126,68 @@ function DemoteBotSquadLeaders()
             }
         }
     }
+}
+
+// Copied from ROSquadInfo::FindNewSquadLeader with additional check to prevent
+// offering bots as the new squad leader.
+function byte FindNewSquadLeader(ROSquadInfo Squad)
+{
+    local array<byte> CandidateRoleIndices;
+    local int i, LowestTier;
+
+    LowestTier = 4;
+
+    // First find the lowest class tier available in this squad.
+    for (i = 1; i < `MAX_ROLES_PER_SQUAD; ++i)
+    {
+        if (PlayerController(Squad.SquadMembers[i].Owner) != None)
+        {
+            if (Squad.GetRole(i).ClassTier < LowestTier)
+            {
+                LowestTier = Squad.GetRole(i).ClassTier;
+            }
+        }
+    }
+
+    // Now store the role indices of all classes in the squad with that same tier
+    // who are highly ranked enough to be eligible for SL.
+    for (i = 1; i < `MAX_ROLES_PER_SQUAD; ++i)
+    {
+        if (PlayerController(Squad.SquadMembers[i].Owner) != none
+            && ROPlayerReplicationInfo(Squad.SquadMembers[i].Owner.PlayerReplicationInfo) != none
+            && ROPlayerReplicationInfo(Squad.SquadMembers[i].Owner.PlayerReplicationInfo).HonorLevel >= `MIN_LEVEL_SQUADLEADER
+            && !ROPlayerReplicationInfo(Squad.SquadMembers[i].Owner.PlayerReplicationInfo).bIsDev
+        )
+        {
+            if (Squad.GetRole(i).ClassTier == LowestTier)
+            {
+                CandidateRoleIndices.AddItem(i);
+            }
+        }
+    }
+
+    // If there is no-one suitable, check again but this time throw out the rank requirement (we cannot have _no_ SL).
+    if (CandidateRoleIndices.length <= 0)
+    {
+        for (i = 1; i < `MAX_ROLES_PER_SQUAD; ++i)
+        {
+            if (PlayerController(Squad.SquadMembers[i].Owner) != none)
+            {
+                if (Squad.GetRole(i).ClassTier == LowestTier)
+                {
+                    CandidateRoleIndices.AddItem(i);
+                }
+            }
+        }
+    }
+
+    // And lastly pick a random player from the condensed list.
+    if (CandidateRoleIndices.length > 0)
+    {
+        return CandidateRoleIndices[Rand(CandidateRoleIndices.length)];
+    }
+
+    return 255;
 }
 
 // - Demote bots that are taking up squad leader slots in a squad with human players in it.
